@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Code Manchester - Visualisation Interactive</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .card {
+            background: white;
+            border-radius: 25px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+            max-width: 900px;
+            width: 100%;
+            transition: transform 0.3s;
+        }
+
+        h1 {
+            text-align: center;
+            color: #1e3c72;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .binary-input {
+            flex: 2;
+            min-width: 250px;
+            padding: 15px 20px;
+            font-size: 18px;
+            font-family: 'Courier New', monospace;
+            border: 2px solid #ddd;
+            border-radius: 15px;
+            outline: none;
+            transition: border-color 0.3s;
+            text-align: center;
+            letter-spacing: 3px;
+        }
+
+        .binary-input:focus {
+            border-color: #2a5298;
+        }
+
+        button {
+            background: #2a5298;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.1s;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #1e3c72;
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        .result-box {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: center;
+            border-left: 5px solid #2a5298;
+        }
+
+        .result-label {
+            font-weight: bold;
+            color: #2a5298;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .manchester-code {
+            font-family: 'Courier New', monospace;
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 5px;
+            word-break: break-all;
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .canvas-container {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin-top: 10px;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #eee;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 20px;
+            border-radius: 3px;
+        }
+
+        .legend-color.high {
+            background: #2ecc71;
+        }
+
+        .legend-color.low {
+            background: #e74c3c;
+        }
+
+        .info {
+            margin-top: 25px;
+            padding: 15px;
+            background: #e8f4fd;
+            border-radius: 15px;
+            font-size: 14px;
+            color: #1e3c72;
+        }
+
+        @media (max-width: 600px) {
+            .card {
+                padding: 20px;
+            }
+            .manchester-code {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>📡 Code Manchester</h1>
+        <div class="subtitle">Visualisation interactive du signal</div>
+
+        <div class="input-group">
+            <input type="text" id="binaryInput" class="binary-input" placeholder="Entrez binaire ex: 1010" value="1010">
+            <button onclick="generateSignal()">🎨 Générer le signal</button>
+        </div>
+
+        <div class="result-box">
+            <div class="result-label">🔁 Code Manchester (transition)</div>
+            <div id="manchesterResult" class="manchester-code">01 10 01 10</div>
+            <div id="errorMsg" class="error-message"></div>
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="signalCanvas" width="800" height="300" style="width:100%; height:auto; max-width:800px; margin:0 auto; display:block"></canvas>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color high"></div>
+                <span>Niveau Haut (1)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color low"></div>
+                <span>Niveau Bas (0)</span>
+            </div>
+            <div class="legend-item">
+                <div style="width:30px; height:20px; background: repeating-linear-gradient(90deg, #2ecc71, #2ecc71 5px, #e74c3c 5px, #e74c3c 10px); border-radius:3px"></div>
+                <span>Transition Manchester</span>
+            </div>
+        </div>
+
+        <div class="info">
+            💡 <strong>Règle du code Manchester :</strong><br>
+            • Bit <strong>1</strong> → transition <span style="color:#e74c3c">Bas</span> → <span style="color:#2ecc71">Haut</span> (0 → 1)<br>
+            • Bit <strong>0</strong> → transition <span style="color:#2ecc71">Haut</span> → <span style="color:#e74c3c">Bas</span> (1 → 0)<br>
+            Chaque bit est représenté par une transition au milieu de la période.
+        </div>
+    </div>
+
+    <script>
+        // Fonction pour dessiner le signal Manchester sur Canvas
+        function drawManchesterSignal(binaryString, canvasId) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            // Paramètres de dessin
+            const paddingLeft = 60;
+            const paddingRight = 40;
+            const paddingTop = 40;
+            const paddingBottom = 40;
+            const graphWidth = width - paddingLeft - paddingRight;
+            
+            const nBits = binaryString.length;
+            if (nBits === 0) return;
+            
+            const segmentWidth = graphWidth / nBits;
+            const midY = height / 2;
+            const highLevel = paddingTop + 20;
+            const lowLevel = height - paddingBottom - 20;
+            
+            // Convertir chaque bit en deux niveaux (Manchester)
+            // Pour chaque bit: [niveau première moitié, niveau deuxième moitié]
+            let manchesterLevels = [];
+            
+            for (let i = 0; i < nBits; i++) {
+                const bit = binaryString[i];
+                if (bit === '1') {
+                    // 1: bas (0) puis haut (1)
+                    manchesterLevels.push([lowLevel, highLevel]);
+                } else if (bit === '0') {
+                    // 0: haut (1) puis bas (0)
+                    manchesterLevels.push([highLevel, lowLevel]);
+                } else {
+                    // Caractère invalide
+                    return false;
+                }
+            }
+            
+            // Effacer le canvas
+            ctx.clearRect(0, 0, width, height);
+            
+            // Dessiner l'arrière-plan
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, width, height);
+            
+            // Dessiner la grille
+            ctx.beginPath();
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 0.5;
+            
+            // Lignes horizontales
+            for (let y = paddingTop; y <= height - paddingBottom; y += (height - paddingTop - paddingBottom) / 4) {
+                ctx.beginPath();
+                ctx.moveTo(paddingLeft - 5, y);
+                ctx.lineTo(width - paddingRight + 5, y);
+                ctx.stroke();
+            }
+            
+            // Lignes verticales
+            for (let x = 0; x <= nBits; x++) {
+                const xPos = paddingLeft + x * segmentWidth;
+                ctx.beginPath();
+                ctx.moveTo(xPos, paddingTop - 5);
+                ctx.lineTo(xPos, height - paddingBottom + 5);
+                ctx.stroke();
+            }
+            
+            // Dessiner l'axe Y
+            ctx.beginPath();
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1.5;
+            ctx.moveTo(paddingLeft, paddingTop - 5);
+            ctx.lineTo(paddingLeft, height - paddingBottom + 5);
+            ctx.moveTo(paddingLeft - 5, highLevel);
+            ctx.lineTo(width - paddingRight + 5, highLevel);
+            ctx.stroke();
+            
+            // Labels des axes
+            ctx.fillStyle = '#666';
+            ctx.font = '12px Arial';
+            ctx.fillText('Niveau', 15, midY);
+            ctx.fillText('Temps', width/2, height - 10);
+            
+            // Labels des niveaux
+            ctx.fillStyle = '#2ecc71';
+            ctx.fillText('1 (Haut)', paddingLeft - 45, highLevel + 4);
+            ctx.fillStyle = '#e74c3c';
+            ctx.fillText('0 (Bas)', paddingLeft - 45, lowLevel + 4);
+            
+            // Dessiner le signal Manchester
+            ctx.beginPath();
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#2a5298';
+            
+            let currentX = paddingLeft;
+            let currentY = manchesterLevels[0][0]; // Premier niveau
+            
+            ctx.moveTo(currentX, currentY);
+            
+            for (let i = 0; i < nBits; i++) {
+                const half1 = manchesterLevels[i][0];
+                const half2 = manchesterLevels[i][1];
+                const x1 = paddingLeft + i * segmentWidth;
+                const xMid = x1 + segmentWidth / 2;
+                const x2 = x1 + segmentWidth;
+                
+                // Première moitié
+                ctx.lineTo(x1, half1);
+                ctx.lineTo(xMid, half1);
+                // Transition
+                ctx.lineTo(xMid, half2);
+                // Deuxième moitié
+                ctx.lineTo(x2, half2);
+            }
+            
+            ctx.stroke();
+            
+            // Marquer les transitions verticales
+            ctx.beginPath();
+            ctx.strokeStyle = '#ff9800';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+            
+            for (let i = 0; i < nBits; i++) {
+                const xMid = paddingLeft + i * segmentWidth + segmentWidth / 2;
+                ctx.moveTo(xMid, highLevel);
+                ctx.lineTo(xMid, lowLevel);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Ajouter les bits en bas
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 14px "Courier New"';
+            ctx.textAlign = 'center';
+            for (let i = 0; i < nBits; i++) {
+                const xCenter = paddingLeft + i * segmentWidth + segmentWidth / 2;
+                ctx.fillText(binaryString[i], xCenter, height - paddingBottom + 20);
+            }
+            
+            // Titre
+            ctx.fillStyle = '#1e3c72';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Signal Manchester', width/2, paddingTop - 10);
+            
+            return true;
+        }
+        
+        // Convertir binaire en Manchester (texte)
+        function binaryToManchester(binary) {
+            let result = '';
+            for (let i = 0; i < binary.length; i++) {
+                if (binary[i] === '1') {
+                    result += '01 ';
+                } else if (binary[i] === '0') {
+                    result += '10 ';
+                } else {
+                    return null;
+                }
+            }
+            return result.trim();
+        }
+        
+        // Fonction principale
+        function generateSignal() {
+            const input = document.getElementById('binaryInput');
+            let binary = input.value.trim();
+            const errorMsgDiv = document.getElementById('errorMsg');
+            const manchesterDiv = document.getElementById('manchesterResult');
+            
+            // Validation
+            if (binary === '') {
+                errorMsgDiv.textContent = '❌ Veuillez entrer un code binaire';
+                manchesterDiv.textContent = '---';
+                return;
+            }
+            
+            // Vérifier que c'est du binaire
+            const validBinary = /^[01]+$/.test(binary);
+            if (!validBinary) {
+                errorMsgDiv.textContent = '❌ Le code doit contenir uniquement des 0 et des 1';
+                manchesterDiv.textContent = '---';
+                return;
+            }
+            
+            errorMsgDiv.textContent = '';
+            
+            // Conversion Manchester
+            const manchesterCode = binaryToManchester(binary);
+            manchesterDiv.textContent = manchesterCode;
+            
+            // Dessiner le signal
+            const drawSuccess = drawManchesterSignal(binary, 'signalCanvas');
+            if (!drawSuccess) {
+                errorMsgDiv.textContent = '❌ Erreur lors du dessin du signal';
+            }
+        }
+        
+        // Chargement initial
+        window.addEventListener('DOMContentLoaded', () => {
+            generateSignal();
+        });
+        
+        // Entrée automatique quand on tape Entrée
+        document.getElementById('binaryInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                generateSignal();
+            }
+        });
+    </script>
+</body>
+</html>
