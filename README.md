@@ -9,8 +9,8 @@ L'utilisateur entre un code binaire et l'application affiche :
 ## Principe du code Manchester
 | Bit binaire | Code Manchester | Transition |
 |-------------|----------------|------------|
-| 1 | 01 | Bas → Haut |
-| 0 | 10 | Haut → Bas |
+| 0 | 01 | Bas → Haut |
+| 1 | 10 | Haut → Bas |
 
 ## Comment utiliser l'application ?
 1. Entrez un code binaire (exemple : `1010`)
