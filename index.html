@@ -198,7 +198,7 @@
 
         <div class="result-box">
             <div class="result-label">🔁 Code Manchester (transition)</div>
-            <div id="manchesterResult" class="manchester-code">01 10 01 10</div>
+            <div id="manchesterResult" class="manchester-code">10 01 10 01</div>
             <div id="errorMsg" class="error-message"></div>
         </div>
 
@@ -209,11 +209,11 @@
         <div class="legend">
             <div class="legend-item">
                 <div class="legend-color high"></div>
-                <span>Niveau Haut (1)</span>
+                <span>Niveau Haut (+V)</span>
             </div>
             <div class="legend-item">
                 <div class="legend-color low"></div>
-                <span>Niveau Bas (0)</span>
+                <span>Niveau Bas (-V)</span>
             </div>
             <div class="legend-item">
                 <div style="width:30px; height:20px; background: repeating-linear-gradient(90deg, #2ecc71, #2ecc71 5px, #e74c3c 5px, #e74c3c 10px); border-radius:3px"></div>
@@ -222,9 +222,9 @@
         </div>
 
         <div class="info">
-            💡 <strong>Règle du code Manchester :</strong><br>
-            • Bit <strong>1</strong> → transition <span style="color:#e74c3c">Bas</span> → <span style="color:#2ecc71">Haut</span> (0 → 1)<br>
-            • Bit <strong>0</strong> → transition <span style="color:#2ecc71">Haut</span> → <span style="color:#e74c3c">Bas</span> (1 → 0)<br>
+            💡 <strong>Règle du code Manchester (Norme Ethernet IEEE 802.3) :</strong><br>
+            • Bit <strong>1</strong> → transition <span style="color:#2ecc71">Haut (+V)</span> → <span style="color:#e74c3c">Bas (-V)</span> (1 → 0)<br>
+            • Bit <strong>0</strong> → transition <span style="color:#e74c3c">Bas (-V)</span> → <span style="color:#2ecc71">Haut (+V)</span> (0 → 1)<br>
             Chaque bit est représenté par une transition au milieu de la période.
         </div>
     </div>
@@ -251,21 +251,23 @@
             
             const segmentWidth = graphWidth / nBits;
             const midY = height / 2;
-            const highLevel = paddingTop + 20;
-            const lowLevel = height - paddingBottom - 20;
+            const highLevel = paddingTop + 20;   // Niveau Haut (+V)
+            const lowLevel = height - paddingBottom - 20;  // Niveau Bas (-V)
             
             // Convertir chaque bit en deux niveaux (Manchester)
-            // Pour chaque bit: [niveau première moitié, niveau deuxième moitié]
+            // Selon la norme Ethernet IEEE 802.3 :
+            // Bit 1 : Haut (+V) → Bas (-V)
+            // Bit 0 : Bas (-V) → Haut (+V)
             let manchesterLevels = [];
             
             for (let i = 0; i < nBits; i++) {
                 const bit = binaryString[i];
                 if (bit === '1') {
-                    // 1: bas (0) puis haut (1)
-                    manchesterLevels.push([lowLevel, highLevel]);
-                } else if (bit === '0') {
-                    // 0: haut (1) puis bas (0)
+                    // Bit 1 : Haut puis Bas (+V → -V)
                     manchesterLevels.push([highLevel, lowLevel]);
+                } else if (bit === '0') {
+                    // Bit 0 : Bas puis Haut (-V → +V)
+                    manchesterLevels.push([lowLevel, highLevel]);
                 } else {
                     // Caractère invalide
                     return false;
@@ -319,9 +321,9 @@
             
             // Labels des niveaux
             ctx.fillStyle = '#2ecc71';
-            ctx.fillText('1 (Haut)', paddingLeft - 45, highLevel + 4);
+            ctx.fillText('+V (Haut)', paddingLeft - 50, highLevel + 4);
             ctx.fillStyle = '#e74c3c';
-            ctx.fillText('0 (Bas)', paddingLeft - 45, lowLevel + 4);
+            ctx.fillText('-V (Bas)', paddingLeft - 50, lowLevel + 4);
             
             // Dessiner le signal Manchester
             ctx.beginPath();
@@ -329,7 +331,7 @@
             ctx.strokeStyle = '#2a5298';
             
             let currentX = paddingLeft;
-            let currentY = manchesterLevels[0][0]; // Premier niveau
+            let currentY = manchesterLevels[0][0];
             
             ctx.moveTo(currentX, currentY);
             
@@ -343,7 +345,7 @@
                 // Première moitié
                 ctx.lineTo(x1, half1);
                 ctx.lineTo(xMid, half1);
-                // Transition
+                // Transition au milieu
                 ctx.lineTo(xMid, half2);
                 // Deuxième moitié
                 ctx.lineTo(x2, half2);
@@ -351,7 +353,7 @@
             
             ctx.stroke();
             
-            // Marquer les transitions verticales
+            // Marquer les transitions verticales (optionnel)
             ctx.beginPath();
             ctx.strokeStyle = '#ff9800';
             ctx.lineWidth = 1;
@@ -365,7 +367,7 @@
             ctx.stroke();
             ctx.setLineDash([]);
             
-            // Ajouter les bits en bas
+            // Ajouter les bits en bas du graphique
             ctx.fillStyle = '#333';
             ctx.font = 'bold 14px "Courier New"';
             ctx.textAlign = 'center';
@@ -378,19 +380,22 @@
             ctx.fillStyle = '#1e3c72';
             ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('Signal Manchester', width/2, paddingTop - 10);
+            ctx.fillText('Signal Manchester (Norme Ethernet IEEE 802.3)', width/2, paddingTop - 10);
             
             return true;
         }
         
         // Convertir binaire en Manchester (texte)
+        // Selon la norme Ethernet IEEE 802.3 :
+        // Bit 1 → "10"
+        // Bit 0 → "01"
         function binaryToManchester(binary) {
             let result = '';
             for (let i = 0; i < binary.length; i++) {
                 if (binary[i] === '1') {
-                    result += '01 ';
-                } else if (binary[i] === '0') {
                     result += '10 ';
+                } else if (binary[i] === '0') {
+                    result += '01 ';
                 } else {
                     return null;
                 }
